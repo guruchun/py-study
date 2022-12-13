@@ -14,12 +14,14 @@
 # - 배경음악, 효과음
 #   . 배경음악: 무한 반복
 #   . 효과음: 발사, 격추, 충돌
+# - 적기 출현
+#   . 적기 출현 위치: 랜덤
+#   . 시간이 지나면 적기의 이동속도 증가, 더 많은 적기의 출현
 # ----------------------------------------------------------
 # 할일
 # - 적기 출현
 #   . 여러 종류의 적기 이미지
 #   . 적기의 이동, 곡선 경로 적용
-#   . 시간이 지나면 적기의 이동속도 증가, 더 많은 적기의 출현
 # - 총으로 격추하기: 총알 위치로 격추 상태 체크, 격추이면 적기 폭발 이미지로 변경, 잠시 후 사라짐
 # - 피격, 적기와 충돌 체크: 전투기 폭파 후 게임 종료
 # - 적기도 총 쏘기
@@ -28,6 +30,8 @@
 import pygame
 from pygame import mixer 
 from pygame import key
+# TODO use random package
+import random
 
 # variables
 pad_width = 1500
@@ -84,6 +88,9 @@ bullet = pygame.transform.scale(bullet, (70, 20))
 bullets = []
 
 # [TODO] create enemy
+enemy = pygame.image.load("res/enemy.png").convert_alpha()
+enemy = pygame.transform.scale(enemy, (40, 35))
+enemies = []
 
 # create FPS timer
 clock = pygame.time.Clock()
@@ -149,12 +156,28 @@ while running:
         for i, xy in enumerate(bullets):
             xy[0] += 5
             game_pad.blit(bullet, xy)
+            # [TODO] 화면에서 벗어나면 삭제
+            if xy[0] > pad_width:
+                bullets.remove(xy)
 
     runningTime = runningTime + 1
     # [TODO] increase enemy show-up speed
+    enemyLevel = min(int(runningTime/60), 49)
     # [TODO] add new enemy
-    
+    if (runningTime % (50-enemyLevel) == 0):
+        enemies.append([pad_width, random.randint(0,pad_height)])
+
     # [TODO] draw enemies
+    if len(enemies) > 0:
+        #print("enemies", len(enemies))
+        for i, xy in enumerate(enemies):
+            xy[0] -= 3
+            xy[1] += random.randint(0,5)
+            xy[1] -= random.randint(0,5)
+            game_pad.blit(enemy, xy)
+            # [TODO] 화면에서 벗어나면 삭제
+            if xy[0] < 0:
+                enemies.remove(xy)
     
     # output game_pad on display
     pygame.display.update()

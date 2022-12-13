@@ -14,12 +14,15 @@
 # - 배경음악, 효과음
 #   . 배경음악: 무한 반복
 #   . 효과음: 발사, 격추, 충돌
+# - 적기 출현
+#   . 적기 출현 위치: 랜덤
+#   . 시간이 지나면 적기의 이동속도 증가, 더 많은 적기의 출현
 # ----------------------------------------------------------
 # 할일
 # - 적기 출현
 #   . 여러 종류의 적기 이미지
 #   . 적기의 이동, 곡선 경로 적용
-#   . 시간이 지나면 적기의 이동속도 증가, 더 많은 적기의 출현
+#   . Class를 만들어서 분리하기
 # - 총으로 격추하기: 총알 위치로 격추 상태 체크, 격추이면 적기 폭발 이미지로 변경, 잠시 후 사라짐
 # - 피격, 적기와 충돌 체크: 전투기 폭파 후 게임 종료
 # - 적기도 총 쏘기
@@ -28,20 +31,96 @@
 import pygame
 from pygame import mixer 
 from pygame import key
+# TODO use random package
+import random
 
 # variables
 pad_width = 1500
 pad_height = 1024
-# TODO-1a
-bg1_x = 0
-bg2_x = 0
+
+class Enemy:
+    Shapes = ["enemy", "enemy1", "enemy2", "enemy3"]
+    # ShapeSizes = []
+    Width = 30
+    Height = 40
+
+    # shape images
+    ShapeImages = {}
+    # for shape in Shapes:
+    #     file_name = "res/" + shape + ".png"
+    #     temp = pygame.image.load(file_name).convert_alpha()
+    #     image = pygame.transform.scale(temp, (Width, Height))
+    #     ShapeImages[shape] = temp
+    #
+    # # explosion image
+    # temp = pygame.image.load("res/explosion.png").convert_alpha()
+    # FiredImage = pygame.transform.scale(temp, (Width, Height))
+
+    # for adjusting next drawing position
+    timer = 20
+    timerMax = 20
+    delta_y = 1
+
+    def __init__(self, shape):
+        # TODO-
+        self.shape = shape
+        self.x = pad_width
+        self.y = randint(0, pad_height-Enemy.Height)
+        self.speed = randint(2, 5)
+
+        self.fired = False
+
+    def get_pos_x(self):
+        return self.x
+
+    def get_width(self):
+        return self.w
+
+    def set_fired(self):
+        self.fired = True
+
+    def draw(self, parent):
+        timer += 1
+        if timer > timerMax:
+            timer = 0
+            delta_y = random.randint(-1,1)
+            timerMax = random.randint(0,50)
+        ship_y = ship_y + delta_y
+        ship_x += 1
+        self.x -= self.speed
+        self.y += randint(-5, 5)
+        if self.y < 0:
+            self.y = 0
+        # pad_height = parent.get_height()
+        if self.y > (pad_height - self.h):
+            self.y = pad_height - self.h
+        parent.blit(Enemy.ShapeImages[self.shape], (self.x, self.y))
+
+
+# TODO-4
+def check_crash():
+    # fx = x
+    # fy = y
+    # for j, jtem in enumerate(enemyList):
+    #     ex = jtem[0]
+    #     ey = jtem[1]
+    #     if fx > ex and fx < ex + enemy_size:
+    #         if (fy > ey and fy < ey + enemy_size) or (fy + f_height > ey and fy + f_height < ey + enemy_size):
+    #             # print ("hit", fx, fy, ex, ey)
+    #             crashed = True
+    #             crash.play()
+    #             enemyList.remove(jtem)
+    #             shotList.append([fx, fy, 30])
+    #             pygame.mixer.music.pause()
+    #             break;
+    return False
 
 # initialize pygame module
 pygame.init()
 
 # create game window
 game_pad = pygame.display.set_mode((pad_width, pad_height))
-pygame.display.set_caption("PyGame-40")
+pygame.display.set_caption("PyGame-42")
 
 mixer.init()
 mixer.music.load('res/bgm_BossMain.wav')
@@ -84,6 +163,9 @@ bullet = pygame.transform.scale(bullet, (70, 20))
 bullets = []
 
 # [TODO] create enemy
+enemy = pygame.image.load("res/enemy.png").convert_alpha()
+enemy = pygame.transform.scale(enemy, (40, 35))
+enemies = []
 
 # create FPS timer
 clock = pygame.time.Clock()
@@ -149,12 +231,28 @@ while running:
         for i, xy in enumerate(bullets):
             xy[0] += 5
             game_pad.blit(bullet, xy)
+            # [TODO] 화면에서 벗어나면 삭제
+            if xy[0] > pad_width:
+                bullets.remove(xy)
 
     runningTime = runningTime + 1
     # [TODO] increase enemy show-up speed
+    enemyLevel = min(int(runningTime/60), 49)
     # [TODO] add new enemy
-    
+    if (runningTime % (50-enemyLevel) == 0):
+        enemies.append([pad_width, random.randint(0,pad_height)])
+
     # [TODO] draw enemies
+    if len(enemies) > 0:
+        #print("enemies", len(enemies))
+        for i, xy in enumerate(enemies):
+            xy[0] -= 3
+            xy[1] += random.randint(0,5)
+            xy[1] -= random.randint(0,5)
+            game_pad.blit(enemy, xy)
+            # [TODO] 화면에서 벗어나면 삭제
+            if xy[0] < 0:
+                enemies.remove(xy)
     
     # output game_pad on display
     pygame.display.update()
