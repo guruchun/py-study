@@ -28,6 +28,7 @@
 import pygame
 from pygame import mixer 
 from pygame import key
+import random
 
 # variables
 pad_width = 1500
@@ -53,6 +54,7 @@ mixer.music.set_volume(0.5)
 
 # create sound effects
 shoot = mixer.Sound("res/shoot.wav")
+boom = mixer.Sound("res/boom.wav")
 
 # prepare background resources
 # using 2 background images
@@ -84,6 +86,13 @@ bullet = pygame.transform.scale(bullet, (70, 20))
 bullets = []
 
 # [TODO] create enemy
+enemy = pygame.image.load("res/enemy.png").convert_alpha()
+enemy = pygame.transform.scale(enemy, (40, 35))
+enemies = []
+
+broken = pygame.image.load("res/explosion.png").convert_alpha()
+broken = pygame.transform.scale(broken, (40, 35))
+brokens = []
 
 # create FPS timer
 clock = pygame.time.Clock()
@@ -96,11 +105,11 @@ while running:
     keys = key.get_pressed()
     if keys[pygame.K_UP]:
         ship_y = ship_y - 2
-    elif keys[pygame.K_DOWN]:
+    if keys[pygame.K_DOWN]:
         ship_y = ship_y + 2
-    elif keys[pygame.K_LEFT]:
+    if keys[pygame.K_LEFT]:
         ship_x = ship_x - 2
-    elif keys[pygame.K_RIGHT]:
+    if keys[pygame.K_RIGHT]:
         ship_x = ship_x + 2
             
     # check event list
@@ -149,12 +158,56 @@ while running:
         for i, xy in enumerate(bullets):
             xy[0] += 5
             game_pad.blit(bullet, xy)
+            if (xy[0] > pad_width):
+                bullets.remove(xy)
 
     runningTime = runningTime + 1
     # [TODO] increase enemy show-up speed
+    showLevel = (int)(runningTime / 30)
+    showInterval = max(1, 60 - showLevel)
     # [TODO] add new enemy
-    
+    if (runningTime % showInterval == 0):
+        enemies.append([pad_width, random.randint(0, pad_height)]);
+        
     # [TODO] draw enemies
+    if len(enemies) > 0:
+        #print("enemies", len(enemies))
+        for i, xy in enumerate(enemies):
+            xy[0] -= 5
+            game_pad.blit(enemy, xy)
+            if (xy[0] < 0):
+                enemies.remove(xy)
+
+    # check bullet to enemy collision
+    for i, xy in enumerate(bullets):
+        b_x = xy[0]
+        b_y = xy[1]
+        b_x = b_x + 70
+        b_y = b_y + 10
+        for j, exy in enumerate(enemies):
+            e_x = exy[0]
+            e_y1 = exy[1]
+            e_y2 = e_y1 + 35
+            if (b_x > e_x and b_y > e_y1 and b_y < e_y2):
+                # remove bullet xy
+                # change image of enemy as broken enemy
+                bullets.remove(xy)
+                enemies.remove(exy)
+                boom.play()
+    
+    # check ship to enemy collision
+    b_x = ship_x + 60
+    b_y = ship_y + 23
+    for j, exy in enumerate(enemies):
+        e_x = exy[0]
+        e_y1 = exy[1]
+        e_y2 = e_y1 + 35
+        if (b_x > e_x and b_y > e_y1 and b_y < e_y2):
+            # remove bullet xy
+            # change image of enemy as broken enemy
+            enemies.remove(exy)
+            boom.play()
+            running = False
     
     # output game_pad on display
     pygame.display.update()

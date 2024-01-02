@@ -142,13 +142,13 @@ while running:
     game_pad.blit(bgImage2, (bgImage2_x2, bgImage2_y))    
 
     # draw battle-ship
-#    timer += 1
-#    if timer > timerMax:
-#        timer = 0
-#        delta_y = random.randint(-1,1)
-#        timerMax = random.randint(0,50)
-#    ship_y = ship_y + delta_y
-#    ship_x += 1
+    timer += 1
+    if timer > timerMax:
+        timer = 0
+        delta_y = random.randint(-1,1)
+        timerMax = random.randint(0,50)
+    ship_y = ship_y + delta_y
+    ship_x += 1
     game_pad.blit(ship, (ship_x, ship_y))
 
     # draw bullets
